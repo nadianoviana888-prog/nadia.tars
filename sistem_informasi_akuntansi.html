@@ -1,0 +1,1463 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Informasi Akuntansi - Enterprise</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navy: '#0A1E85',
+                        violet: '#5C1294',
+                        magenta: '#D90479',
+                        darkbg: '#0F172A',
+                        cardbg: '#1E293B',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SheetJS for Excel export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- jsPDF for PDF export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-header {
+            background: linear-gradient(135deg, #0A1E85 0%, #5C1294 50%, #D90479 100%);
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #5C1294;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
+
+    <!-- Top Navigation & Header -->
+    <header class="gradient-header text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="bg-white/20 p-2 rounded-xl backdrop-blur-md">
+                    <i class="fa-solid fa-chart-pie text-2xl text-pink-300"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold tracking-tight">SIA ENTERPRISE</h1>
+                    <p class="text-xs text-pink-200">Integrated Financial Management & Spreadsheets</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <span id="sync-status" class="hidden sm:inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-100 border border-emerald-400/30">
+                    <span class="w-2 h-2 mr-1.5 bg-emerald-400 rounded-full animate-pulse"></span> Terhubung Spreadsheet
+                </span>
+                <button onclick="syncDataToCloud()" class="bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5 border border-white/20">
+                    <i class="fa-solid fa-sync"></i> Sinkronisasi
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Layout -->
+    <div class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col md:flex-row gap-6">
+        
+        <!-- Sidebar Navigation -->
+        <aside class="w-full md:w-64 bg-white rounded-2xl shadow-sm border border-slate-200 p-4 flex flex-col gap-2 shrink-0 h-fit">
+            <div class="text-xs font-bold uppercase tracking-wider text-slate-400 px-3 py-1">Menu Utama</div>
+            
+            <button onclick="switchTab('dashboard')" class="tab-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-slate-600 hover:bg-slate-100 active-tab bg-navy text-white shadow-md shadow-navy/20" data-target="dashboard">
+                <i class="fa-solid fa-gauge w-5 text-center"></i> Dashboard
+            </button>
+            <button onclick="switchTab('jurnal')" class="tab-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-slate-600 hover:bg-slate-100" data-target="jurnal">
+                <i class="fa-solid fa-book w-5 text-center"></i> Jurnal Umum
+            </button>
+            <button onclick="switchTab('pettycash')" class="tab-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-slate-600 hover:bg-slate-100" data-target="pettycash">
+                <i class="fa-solid fa-wallet w-5 text-center"></i> Petty Cash Cabang
+            </button>
+            <button onclick="switchTab('bukubesar')" class="tab-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-slate-600 hover:bg-slate-100" data-target="bukubesar">
+                <i class="fa-solid fa-book-open w-5 text-center"></i> Buku Besar
+            </button>
+            <button onclick="switchTab('neracasaldo')" class="tab-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-slate-600 hover:bg-slate-100" data-target="neracasaldo">
+                <i class="fa-solid fa-scale-balanced w-5 text-center"></i> Neraca Saldo
+            </button>
+            <button onclick="switchTab('labarugi')" class="tab-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-slate-600 hover:bg-slate-100" data-target="labarugi">
+                <i class="fa-solid fa-chart-line w-5 text-center"></i> Laba Rugi
+            </button>
+            <button onclick="switchTab('coa')" class="tab-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-slate-600 hover:bg-slate-100" data-target="coa">
+                <i class="fa-solid fa-list-check w-5 text-center"></i> Chart of Accounts (COA)
+            </button>
+
+            <div class="text-xs font-bold uppercase tracking-wider text-slate-400 px-3 pt-4 pb-1">Pengajuan & Anggaran</div>
+            <button onclick="switchTab('pengajuandana')" class="tab-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-slate-600 hover:bg-slate-100" data-target="pengajuandana">
+                <i class="fa-solid fa-file-invoice-dollar w-5 text-center"></i> Pengajuan Dana
+            </button>
+            <button onclick="switchTab('reimburse')" class="tab-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-slate-600 hover:bg-slate-100" data-target="reimburse">
+                <i class="fa-solid fa-receipt w-5 text-center"></i> Pengajuan Reimburse
+            </button>
+            <button onclick="switchTab('divisibudget')" class="tab-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition text-slate-600 hover:bg-slate-100" data-target="divisibudget">
+                <i class="fa-solid fa-building-user w-5 text-center"></i> Budget Divisi
+            </button>
+        </aside>
+
+        <!-- Content Area -->
+        <main class="flex-1 bg-white rounded-2xl shadow-sm border border-slate-200 p-6 overflow-hidden flex flex-col">
+
+            <!-- 1. DASHBOARD TAB -->
+            <div id="tab-dashboard" class="tab-content flex flex-col gap-6">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800">Dashboard Keuangan</h2>
+                        <p class="text-sm text-slate-500">Ringkasan real-time aktivitas keuangan & anggaran operasional.</p>
+                    </div>
+                    <div class="text-sm bg-violet-50 text-violet-700 px-3 py-1.5 rounded-lg border border-violet-200 font-medium">
+                        Periode: <span id="dash-date-label">Bulan Ini</span>
+                    </div>
+                </div>
+
+                <!-- Metric Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-gradient-to-br from-navy to-violet-800 text-white p-5 rounded-2xl shadow-md">
+                        <div class="flex justify-between items-start">
+                            <p class="text-xs uppercase font-semibold tracking-wider text-pink-200">Total Kas & Bank</p>
+                            <i class="fa-solid fa-wallet text-pink-300 opacity-80 text-lg"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mt-2" id="stat-total-kas">Rp 0</h3>
+                        <p class="text-xs text-slate-200 mt-2"><span class="text-emerald-300 font-semibold">↑ Real-time</span> dari Jurnal</p>
+                    </div>
+                    <div class="bg-gradient-to-br from-violet-700 to-magenta text-white p-5 rounded-2xl shadow-md">
+                        <div class="flex justify-between items-start">
+                            <p class="text-xs uppercase font-semibold tracking-wider text-pink-200">Pendapatan Bulan Ini</p>
+                            <i class="fa-solid fa-arrow-trend-up text-pink-300 opacity-80 text-lg"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mt-2" id="stat-total-pendapatan">Rp 0</h3>
+                        <p class="text-xs text-slate-200 mt-2">Akumulasi Pendapatan</p>
+                    </div>
+                    <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-sm">
+                        <div class="flex justify-between items-start">
+                            <p class="text-xs uppercase font-semibold tracking-wider text-slate-400">Pengeluaran / Biaya</p>
+                            <i class="fa-solid fa-arrow-trend-down text-rose-500 opacity-80 text-lg"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mt-2 text-slate-800" id="stat-total-pengeluaran">Rp 0</h3>
+                        <p class="text-xs text-slate-400 mt-2">Beban Operasional</p>
+                    </div>
+                    <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-sm">
+                        <div class="flex justify-between items-start">
+                            <p class="text-xs uppercase font-semibold tracking-wider text-slate-400">Laba Bersih</p>
+                            <i class="fa-solid fa-scale-balanced text-violet-600 opacity-80 text-lg"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mt-2 text-violet-700" id="stat-laba-bersih">Rp 0</h3>
+                        <p class="text-xs text-slate-400 mt-2">Pendapatan - Beban</p>
+                    </div>
+                </div>
+
+                <!-- Division Budget Overview -->
+                <div class="mt-4">
+                    <h3 class="text-base font-bold text-slate-800 mb-3">Realisasi Budget Masing-Masing Divisi</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="dash-div-budget-grid">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. JURNAL UMUM TAB -->
+            <div id="tab-jurnal" class="tab-content hidden flex flex-col gap-4">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800">Jurnal Umum</h2>
+                        <p class="text-sm text-slate-500">Catat transaksi debit dan kredit akun keuangan.</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <input type="date" id="jurnal-start" class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs">
+                        <span class="text-xs text-slate-500">s/d</span>
+                        <input type="date" id="jurnal-end" class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs">
+                        <button onclick="filterJurnal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-medium transition">Filter</button>
+                        <button onclick="exportTableToExcel('jurnal-table', 'Jurnal_Umum.xlsx')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5"><i class="fa-solid fa-file-excel"></i> Excel</button>
+                        <button onclick="exportTableToPDF('jurnal-table', 'Laporan Jurnal Umum', 'Jurnal_Umum.pdf')" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+                    </div>
+                </div>
+
+                <!-- Input Form Jurnal -->
+                <form id="form-jurnal" onsubmit="addJurnal(event)" class="bg-slate-50 p-4 rounded-xl border border-slate-200 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 items-end">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Tanggal</label>
+                        <input type="date" id="j-date" required class="w-full border border-slate-300 rounded-lg p-2 text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">No Ref / Bukti</label>
+                        <input type="text" id="j-ref" placeholder="REF-001" required class="w-full border border-slate-300 rounded-lg p-2 text-xs">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Keterangan Transaksi</label>
+                        <input type="text" id="j-desc" placeholder="Contoh: Pembayaran Sewa Kantor" required class="w-full border border-slate-300 rounded-lg p-2 text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Akun (COA)</label>
+                        <select id="j-account" required class="w-full border border-slate-300 rounded-lg p-2 text-xs">
+                            <!-- Filled dynamically -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Posisi</label>
+                        <select id="j-position" required class="w-full border border-slate-300 rounded-lg p-2 text-xs">
+                            <option value="Debit">Debit</option>
+                            <option value="Kredit">Kredit</option>
+                        </select>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Jumlah (Rp)</label>
+                        <input type="number" id="j-amount" placeholder="0" required class="w-full border border-slate-300 rounded-lg p-2 text-xs">
+                    </div>
+                    <div class="sm:col-span-4 flex justify-end">
+                        <button type="submit" class="bg-gradient-to-r from-navy to-violet-700 text-white px-5 py-2 rounded-lg text-xs font-medium hover:opacity-95 transition shadow-md">
+                            <i class="fa-solid fa-plus mr-1"></i> Simpan Transaksi Jurnal
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Table Jurnal -->
+                <div class="flex-1 overflow-x-auto custom-scrollbar border border-slate-200 rounded-xl">
+                    <table id="jurnal-table" class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-700 border-b border-slate-200">
+                                <th class="p-3">Tanggal</th>
+                                <th class="p-3">No Ref</th>
+                                <th class="p-3">Keterangan</th>
+                                <th class="p-3">Kode Akun</th>
+                                <th class="p-3">Nama Akun</th>
+                                <th class="p-3 text-right">Debit (Rp)</th>
+                                <th class="p-3 text-right">Kredit (Rp)</th>
+                                <th class="p-3 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="jurnal-tbody" class="divide-y divide-slate-200">
+                            <!-- Filled by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 3. PETTY CASH CABANG TAB -->
+            <div id="tab-pettycash" class="tab-content hidden flex flex-col gap-4">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800">Petty Cash Cabang</h2>
+                        <p class="text-sm text-slate-500">Top-up kas kecil dan pencatatan pengeluaran operasional cabang.</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <input type="date" id="pc-start" class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs">
+                        <span class="text-xs text-slate-500">s/d</span>
+                        <input type="date" id="pc-end" class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs">
+                        <button onclick="filterPettyCash()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-medium transition">Filter</button>
+                        <button onclick="exportTableToExcel('pettycash-table', 'Petty_Cash.xlsx')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5"><i class="fa-solid fa-file-excel"></i> Excel</button>
+                        <button onclick="exportTableToPDF('pettycash-table', 'Laporan Petty Cash Cabang', 'Petty_Cash.pdf')" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+                    </div>
+                </div>
+
+                <!-- Form Petty Cash -->
+                <form id="form-pettycash" onsubmit="addPettyCash(event)" class="bg-slate-50 p-4 rounded-xl border border-slate-200 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Tanggal</label>
+                        <input type="date" id="pc-date" required class="w-full border border-slate-300 rounded-lg p-2 text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Cabang</label>
+                        <select id="pc-branch" required class="w-full border border-slate-300 rounded-lg p-2 text-xs">
+                            <option value="Cabang Jakarta Pusat">Cabang Jakarta Pusat</option>
+                            <option value="Cabang Jakarta Selatan">Cabang Jakarta Selatan</option>
+                            <option value="Cabang Bandung">Cabang Bandung</option>
+                            <option value="Cabang Surabaya">Cabang Surabaya</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Tipe Transaksi</label>
+                        <select id="pc-type" required class="w-full border border-slate-300 rounded-lg p-2 text-xs">
+                            <option value="Top Up">Top Up Kas Kecil</option>
+                            <option value="Pengeluaran">Pengeluaran Kas Kecil</option>
+                        </select>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Keperluan / Keterangan</label>
+                        <input type="text" id="pc-desc" placeholder="Contoh: Pembelian ATK & Konsumsi" required class="w-full border border-slate-300 rounded-lg p-2 text-xs">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Jumlah (Rp)</label>
+                        <input type="number" id="pc-amount" placeholder="0" required class="w-full border border-slate-300 rounded-lg p-2 text-xs">
+                    </div>
+                    <div class="sm:col-span-3 flex justify-end">
+                        <button type="submit" class="bg-gradient-to-r from-violet-700 to-magenta text-white px-5 py-2 rounded-lg text-xs font-medium hover:opacity-95 transition shadow-md">
+                            <i class="fa-solid fa-plus mr-1"></i> Simpan Petty Cash
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Table Petty Cash -->
+                <div class="flex-1 overflow-x-auto custom-scrollbar border border-slate-200 rounded-xl">
+                    <table id="pettycash-table" class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-700 border-b border-slate-200">
+                                <th class="p-3">Tanggal</th>
+                                <th class="p-3">Cabang</th>
+                                <th class="p-3">Tipe</th>
+                                <th class="p-3">Keterangan</th>
+                                <th class="p-3 text-right">Masuk (Top Up)</th>
+                                <th class="p-3 text-right">Keluar</th>
+                                <th class="p-3 text-right">Saldo</th>
+                                <th class="p-3 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pettycash-tbody" class="divide-y divide-slate-200">
+                            <!-- Filled by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 4. BUKU BESAR TAB -->
+            <div id="tab-bukubesar" class="tab-content hidden flex flex-col gap-4">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800">Buku Besar (General Ledger)</h2>
+                        <p class="text-sm text-slate-500">Mutasi dan saldo per akun perkiraan.</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <select id="bb-account-filter" onchange="renderBukuBesar()" class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs font-medium">
+                            <!-- Filled by COA -->
+                        </select>
+                        <button onclick="exportTableToExcel('bukubesar-table', 'Buku_Besar.xlsx')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5"><i class="fa-solid fa-file-excel"></i> Excel</button>
+                        <button onclick="exportTableToPDF('bukubesar-table', 'Laporan Buku Besar', 'Buku_Besar.pdf')" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+                    </div>
+                </div>
+
+                <div class="flex-1 overflow-x-auto custom-scrollbar border border-slate-200 rounded-xl">
+                    <table id="bukubesar-table" class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-700 border-b border-slate-200">
+                                <th class="p-3">Tanggal</th>
+                                <th class="p-3">No Ref</th>
+                                <th class="p-3">Keterangan</th>
+                                <th class="p-3 text-right">Debit (Rp)</th>
+                                <th class="p-3 text-right">Kredit (Rp)</th>
+                                <th class="p-3 text-right">Saldo (Rp)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bukubesar-tbody" class="divide-y divide-slate-200">
+                            <!-- Filled by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 5. NERACA SALDO TAB -->
+            <div id="tab-neracasaldo" class="tab-content hidden flex flex-col gap-4">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800">Neraca Saldo (Trial Balance)</h2>
+                        <p class="text-sm text-slate-500">Ringkasan saldo akhir seluruh akun (Debit & Kredit).</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="exportTableToExcel('neraca-table', 'Neraca_Saldo.xlsx')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5"><i class="fa-solid fa-file-excel"></i> Excel</button>
+                        <button onclick="exportTableToPDF('neraca-table', 'Laporan Neraca Saldo', 'Neraca_Saldo.pdf')" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+                    </div>
+                </div>
+
+                <div class="flex-1 overflow-x-auto custom-scrollbar border border-slate-200 rounded-xl">
+                    <table id="neraca-table" class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-700 border-b border-slate-200">
+                                <th class="p-3">Kode Akun</th>
+                                <th class="p-3">Nama Akun</th>
+                                <th class="p-3">Kategori</th>
+                                <th class="p-3 text-right">Debit (Rp)</th>
+                                <th class="p-3 text-right">Kredit (Rp)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="neraca-tbody" class="divide-y divide-slate-200">
+                            <!-- Filled by JS -->
+                        </tbody>
+                        <tfoot>
+                            <tr class="bg-slate-50 font-bold border-t border-slate-300">
+                                <td colspan="3" class="p-3 text-right">Total:</td>
+                                <td id="neraca-total-debit" class="p-3 text-right text-navy">Rp 0</td>
+                                <td id="neraca-total-kredit" class="p-3 text-right text-magenta">Rp 0</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 6. LABA RUGI TAB -->
+            <div id="tab-labarugi" class="tab-content hidden flex flex-col gap-4">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800">Laporan Laba Rugi (Profit & Loss)</h2>
+                        <p class="text-sm text-slate-500">Pendapatan dikurangi beban operasional.</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="exportTableToExcel('labarugi-table', 'Laba_Rugi.xlsx')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5"><i class="fa-solid fa-file-excel"></i> Excel</button>
+                        <button onclick="exportTableToPDF('labarugi-table', 'Laporan Laba Rugi', 'Laba_Rugi.pdf')" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+                    </div>
+                </div>
+
+                <div class="flex-1 overflow-x-auto custom-scrollbar border border-slate-200 rounded-xl">
+                    <table id="labarugi-table" class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-700 border-b border-slate-200">
+                                <th class="p-3">Kategori / Akun</th>
+                                <th class="p-3">Keterangan</th>
+                                <th class="p-3 text-right">Jumlah (Rp)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="labarugi-tbody" class="divide-y divide-slate-200">
+                            <!-- Filled by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 7. CHART OF ACCOUNTS (COA) TAB -->
+            <div id="tab-coa" class="tab-content hidden flex flex-col gap-4">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800">Chart of Accounts (COA)</h2>
+                        <p class="text-sm text-slate-500">Kelola daftar akun perkiraan (Tambah, Edit, Hapus).</p>
+                    </div>
+                    <button onclick="openCoaModal()" class="bg-gradient-to-r from-navy to-violet-700 text-white px-4 py-2 rounded-xl text-xs font-medium shadow-md hover:opacity-90 transition">
+                        <i class="fa-solid fa-plus mr-1"></i> Tambah Akun Baru
+                    </button>
+                </div>
+
+                <div class="flex-1 overflow-x-auto custom-scrollbar border border-slate-200 rounded-xl">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-700 border-b border-slate-200">
+                                <th class="p-3">Kode Akun</th>
+                                <th class="p-3">Nama Akun</th>
+                                <th class="p-3">Kategori</th>
+                                <th class="p-3 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="coa-tbody" class="divide-y divide-slate-200">
+                            <!-- Filled by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 8. PENGAJUAN DANA TAB -->
+            <div id="tab-pengajuandana" class="tab-content hidden flex flex-col gap-4">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800">Form Pengajuan Dana</h2>
+                        <p class="text-sm text-slate-500">Ajukan kebutuhan dana operasional lengkap dengan lampiran invoice.</p>
+                    </div>
+                </div>
+
+                <form id="form-dana" onsubmit="submitPengajuanDana(event)" class="bg-slate-50 p-5 rounded-xl border border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Nama Pemohon</label>
+                        <input type="text" id="fd-nama" required class="w-full border border-slate-300 rounded-lg p-2 text-xs" placeholder="Nama Lengkap">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Divisi</label>
+                        <select id="fd-divisi" required class="w-full border border-slate-300 rounded-lg p-2 text-xs">
+                            <option value="HRD">HRD</option>
+                            <option value="OPERASIONAL">OPERASIONAL</option>
+                            <option value="PROCUREMENT">PROCUREMENT</option>
+                            <option value="MARKETING">MARKETING</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Jumlah Dana (Rp)</label>
+                        <input type="number" id="fd-jumlah" required class="w-full border border-slate-300 rounded-lg p-2 text-xs" placeholder="0">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Upload Invoice / Lampiran</label>
+                        <input type="file" id="fd-file" accept="image/*,application/pdf" class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Keperluan / Keterangan Detail</label>
+                        <textarea id="fd-keterangan" rows="3" required class="w-full border border-slate-300 rounded-lg p-2 text-xs" placeholder="Jelaskan peruntukan dana..."></textarea>
+                    </div>
+                    <div class="sm:col-span-2 flex justify-end">
+                        <button type="submit" class="bg-gradient-to-r from-navy to-violet-700 text-white px-6 py-2.5 rounded-xl text-xs font-medium shadow-md hover:opacity-95 transition">
+                            <i class="fa-solid fa-paper-plane mr-1"></i> Kirim Pengajuan Dana
+                        </button>
+                    </div>
+                </form>
+
+                <div class="mt-4">
+                    <h3 class="text-sm font-bold text-slate-800 mb-2">Riwayat Pengajuan Dana</h3>
+                    <div class="overflow-x-auto custom-scrollbar border border-slate-200 rounded-xl">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr class="bg-slate-100 text-slate-700 border-b border-slate-200">
+                                    <th class="p-3">Tanggal</th>
+                                    <th class="p-3">Pemohon</th>
+                                    <th class="p-3">Divisi</th>
+                                    <th class="p-3 text-right">Jumlah (Rp)</th>
+                                    <th class="p-3">Keperluan</th>
+                                    <th class="p-3">Lampiran</th>
+                                    <th class="p-3 text-center">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dana-tbody" class="divide-y divide-slate-200">
+                                <!-- Filled by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 9. REIMBURSE TAB -->
+            <div id="tab-reimburse" class="tab-content hidden flex flex-col gap-4">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800">Form Pengajuan Reimburse</h2>
+                        <p class="text-sm text-slate-500">Klaim penggantian biaya operasional yang telah ditalangi.</p>
+                    </div>
+                </div>
+
+                <form id="form-reimburse" onsubmit="submitReimburse(event)" class="bg-slate-50 p-5 rounded-xl border border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Nama Pemohon</label>
+                        <input type="text" id="rb-nama" required class="w-full border border-slate-300 rounded-lg p-2 text-xs" placeholder="Nama Lengkap">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Divisi</label>
+                        <select id="rb-divisi" required class="w-full border border-slate-300 rounded-lg p-2 text-xs">
+                            <option value="HRD">HRD</option>
+                            <option value="OPERASIONAL">OPERASIONAL</option>
+                            <option value="PROCUREMENT">PROCUREMENT</option>
+                            <option value="MARKETING">MARKETING</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Jumlah Klaim (Rp)</label>
+                        <input type="number" id="rb-jumlah" required class="w-full border border-slate-300 rounded-lg p-2 text-xs" placeholder="0">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Upload Bukti / Nota / Invoice</label>
+                        <input type="file" id="rb-file" accept="image/*,application/pdf" required class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-magenta/10 file:text-magenta hover:file:bg-magenta/20">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Keterangan Biaya</label>
+                        <textarea id="rb-keterangan" rows="3" required class="w-full border border-slate-300 rounded-lg p-2 text-xs" placeholder="Detail pengeluaran..."></textarea>
+                    </div>
+                    <div class="sm:col-span-2 flex justify-end">
+                        <button type="submit" class="bg-gradient-to-r from-violet-700 to-magenta text-white px-6 py-2.5 rounded-xl text-xs font-medium shadow-md hover:opacity-95 transition">
+                            <i class="fa-solid fa-receipt mr-1"></i> Kirim Reimburse
+                        </button>
+                    </div>
+                </form>
+
+                <div class="mt-4">
+                    <h3 class="text-sm font-bold text-slate-800 mb-2">Riwayat Reimburse</h3>
+                    <div class="overflow-x-auto custom-scrollbar border border-slate-200 rounded-xl">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr class="bg-slate-100 text-slate-700 border-b border-slate-200">
+                                    <th class="p-3">Tanggal</th>
+                                    <th class="p-3">Pemohon</th>
+                                    <th class="p-3">Divisi</th>
+                                    <th class="p-3 text-right">Jumlah (Rp)</th>
+                                    <th class="p-3">Keterangan</th>
+                                    <th class="p-3">Lampiran</th>
+                                    <th class="p-3 text-center">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reimburse-tbody" class="divide-y divide-slate-200">
+                                <!-- Filled by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 10. BUDGET MASING-MASING DIVISI TAB -->
+            <div id="tab-divisibudget" class="tab-content hidden flex flex-col gap-4">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-800">Budget Masing-Masing Divisi</h2>
+                        <p class="text-sm text-slate-500">Top-up anggaran, monitoring realisasi, filter tanggal & unduh laporan.</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button onclick="openTopupBudgetModal()" class="bg-gradient-to-r from-navy to-violet-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium shadow-md"><i class="fa-solid fa-wallet mr-1"></i> Top-up Budget Divisi</button>
+                        <button onclick="exportTableToExcel('divbudget-table', 'Budget_Divisi.xlsx')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5"><i class="fa-solid fa-file-excel"></i> Excel</button>
+                        <button onclick="exportTableToPDF('divbudget-table', 'Laporan Budget Divisi', 'Budget_Divisi.pdf')" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center gap-1.5"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="divbudget-cards-container">
+                    <!-- Filled by JS -->
+                </div>
+
+                <div class="mt-4">
+                    <h3 class="text-sm font-bold text-slate-800 mb-2">Riwayat Top-up & Mutasi Budget Divisi</h3>
+                    <div class="overflow-x-auto custom-scrollbar border border-slate-200 rounded-xl">
+                        <table id="divbudget-table" class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr class="bg-slate-100 text-slate-700 border-b border-slate-200">
+                                    <th class="p-3">Tanggal</th>
+                                    <th class="p-3">Divisi</th>
+                                    <th class="p-3">Keterangan / Sumber</th>
+                                    <th class="p-3 text-right">Top-up (Rp)</th>
+                                    <th class="p-3 text-right">Terpakai (Rp)</th>
+                                    <th class="p-3 text-right">Sisa Budget (Rp)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="divbudget-tbody" class="divide-y divide-slate-200">
+                                <!-- Filled by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- COA Modal -->
+    <div id="coa-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl flex flex-col gap-4">
+            <h3 id="coa-modal-title" class="text-lg font-bold text-slate-800">Tambah Akun COA</h3>
+            <form id="form-coa" onsubmit="saveCoa(event)" class="flex flex-col gap-3">
+                <input type="hidden" id="coa-old-code">
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Kode Akun</label>
+                    <input type="text" id="coa-code" required class="w-full border border-slate-300 rounded-lg p-2 text-xs" placeholder="1-1001">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Nama Akun</label>
+                    <input type="text" id="coa-name" required class="w-full border border-slate-300 rounded-lg p-2 text-xs" placeholder="Kas Besar">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Kategori</label>
+                    <select id="coa-category" required class="w-full border border-slate-300 rounded-lg p-2 text-xs">
+                        <option value="Aktiva Lancar">Aktiva Lancar</option>
+                        <option value="Aktiva Tetap">Aktiva Tetap</option>
+                        <option value="Kewajiban">Kewajiban</option>
+                        <option value="Ekuitas">Ekuitas</option>
+                        <option value="Pendapatan">Pendapatan</option>
+                        <option value="Beban">Beban</option>
+                    </select>
+                </div>
+                <div class="flex justify-end gap-2 mt-2">
+                    <button type="button" onclick="closeCoaModal()" class="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-xs font-medium hover:bg-slate-300 transition">Batal</button>
+                    <button type="submit" class="bg-navy text-white px-4 py-2 rounded-lg text-xs font-medium hover:opacity-90 transition">Simpan Akun</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Top-up Budget Modal -->
+    <div id="budget-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl flex flex-col gap-4">
+            <h3 class="text-lg font-bold text-slate-800">Top-up Budget Divisi</h3>
+            <form id="form-topup-budget" onsubmit="submitTopupBudget(event)" class="flex flex-col gap-3">
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Pilih Divisi</label>
+                    <select id="tb-divisi" required class="w-full border border-slate-300 rounded-lg p-2 text-xs">
+                        <option value="HRD">HRD</option>
+                        <option value="OPERASIONAL">OPERASIONAL</option>
+                        <option value="PROCUREMENT">PROCUREMENT</option>
+                        <option value="MARKETING">MARKETING</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Jumlah Top-up (Rp)</label>
+                    <input type="number" id="tb-jumlah" required class="w-full border border-slate-300 rounded-lg p-2 text-xs" placeholder="0">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Keterangan / Sumber Dana</label>
+                    <input type="text" id="tb-keterangan" required class="w-full border border-slate-300 rounded-lg p-2 text-xs" placeholder="Top-up bulanan Q3">
+                </div>
+                <div class="flex justify-end gap-2 mt-2">
+                    <button type="button" onclick="closeTopupBudgetModal()" class="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-xs font-medium hover:bg-slate-300 transition">Batal</button>
+                    <button type="submit" class="bg-violet-700 text-white px-4 py-2 rounded-lg text-xs font-medium hover:opacity-90 transition">Proses Top-up</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Application JavaScript -->
+    <script>
+        // Global State Mock & LocalStorage / Apps Script Integration
+        let state = {
+            coa: [
+                { code: '1-1001', name: 'Kas Besar', category: 'Aktiva Lancar' },
+                { code: '1-1002', name: 'Kas Kecil Cabang', category: 'Aktiva Lancar' },
+                { code: '1-1003', name: 'Bank BCA', category: 'Aktiva Lancar' },
+                { code: '1-2001', name: 'Piutang Usaha', category: 'Aktiva Lancar' },
+                { code: '2-1001', name: 'Hutang Usaha', category: 'Kewajiban' },
+                { code: '3-1001', name: 'Modal Disetor', category: 'Ekuitas' },
+                { code: '4-1001', name: 'Pendapatan Jasa', category: 'Pendapatan' },
+                { code: '5-1001', name: 'Beban Gaji', category: 'Beban' },
+                { code: '5-1002', name: 'Beban Sewa', category: 'Beban' },
+                { code: '5-1003', name: 'Beban Operasional & ATK', category: 'Beban' }
+            ],
+            jurnal: [
+                { date: '2026-06-01', ref: 'REF-001', desc: 'Setoran Modal Awal', code: '1-1001', name: 'Kas Besar', debit: 50000000, kredit: 0 },
+                { date: '2026-06-01', ref: 'REF-001', desc: 'Setoran Modal Awal', code: '3-1001', name: 'Modal Disetor', debit: 0, kredit: 50000000 },
+                { date: '2026-06-03', ref: 'REF-002', desc: 'Pendapatan Jasa Konsultasi', code: '1-1003', name: 'Bank BCA', debit: 15000000, kredit: 0 },
+                { date: '2026-06-03', ref: 'REF-002', desc: 'Pendapatan Jasa Konsultasi', code: '4-1001', name: 'Pendapatan Jasa', debit: 0, kredit: 15000000 },
+                { date: '2026-06-05', ref: 'REF-003', desc: 'Bayar Sewa Kantor', code: '5-1002', name: 'Beban Sewa', debit: 5000000, kredit: 0 },
+                { date: '2026-06-05', ref: 'REF-003', desc: 'Bayar Sewa Kantor', code: '1-1001', name: 'Kas Besar', debit: 0, kredit: 5000000 }
+            ],
+            pettycash: [
+                { date: '2026-06-02', branch: 'Cabang Jakarta Pusat', type: 'Top Up', desc: 'Top-up awal kas kecil', amount: 5000000, balance: 5000000 },
+                { date: '2026-06-04', branch: 'Cabang Jakarta Pusat', type: 'Pengeluaran', desc: 'Pembelian konsumsi meeting', amount: 350000, balance: 4650000 }
+            ],
+            pengajuandana: [
+                { date: '2026-06-04', nama: 'Budi Santoso', divisi: 'OPERASIONAL', jumlah: 2500000, keterangan: 'Pembelian perangkat router wifi cabang baru', file: 'invoice_router.pdf', status: 'Disetujui' }
+            ],
+            reimburse: [
+                { date: '2026-06-05', nama: 'Siti Rahma', divisi: 'MARKETING', jumlah: 450000, keterangan: 'Biaya transport klien meeting', file: 'nota_bbm.jpg', status: 'Pending' }
+            ],
+            divisibudget: {
+                HRD: { total: 20000000, used: 4500000, history: [{ date: '2026-06-01', ket: 'Alokasi Awal Q3', topup: 20000000 }] },
+                OPERASIONAL: { total: 35000000, used: 12500000, history: [{ date: '2026-06-01', ket: 'Alokasi Awal Q3', topup: 35000000 }] },
+                PROCUREMENT: { total: 50000000, used: 18000000, history: [{ date: '2026-06-01', ket: 'Alokasi Awal Q3', topup: 50000000 }] },
+                MARKETING: { total: 25000000, used: 9500000, history: [{ date: '2026-06-01', ket: 'Alokasi Awal Q3', topup: 25000000 }] }
+            }
+        };
+
+        // Load data on startup
+        window.onload = function() {
+            // Set default date inputs to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('j-date').value = today;
+            document.getElementById('pc-date').value = today;
+
+            loadStateFromLocalStorage();
+            renderAll();
+        };
+
+        function saveStateToLocalStorage() {
+            localStorage.setItem('sia_enterprise_data', JSON.stringify(state));
+        }
+
+        function loadStateFromLocalStorage() {
+            const saved = localStorage.getItem('sia_enterprise_data');
+            if (saved) {
+                try {
+                    state = JSON.parse(saved);
+                } catch(e) { console.error(e); }
+            }
+        }
+
+        function syncDataToCloud() {
+            // 1. Masukkan URL Web App Anda (yang berakhiran /exec) di dalam variabel di bawah ini:
+            const GOOGLE_SCRIPT_URL = 'MASUKKAN_URL_WEB_APP_ANDA_DISINI'; 
+            
+            // Contoh format URL: 
+            // const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz.../exec';
+
+            if (GOOGLE_SCRIPT_URL === 'MASUKKAN_URL_WEB_APP_ANDA_DISINI' || !GOOGLE_SCRIPT_URL) {
+                alertCustom('Silakan ganti teks "MASUKKAN_URL_WEB_APP_ANDA_DISINI" dengan URL Web App Apps Script Anda.');
+                return;
+            }
+
+            const btn = event ? event.currentTarget : null;
+            if (btn) {
+                const originalHtml = btn.innerHTML;
+                btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Mensinkronkan...`;
+                
+                // Kirim data ke Google Spreadsheet secara asinkron menggunakan fetch
+                fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors', // Diperlukan untuk Apps Script web app
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'syncAll', data: state })
+                }).then(() => {
+                    btn.innerHTML = originalHtml;
+                    alertCustom('Berhasil mensinkronkan seluruh data ke Google Spreadsheet!');
+                }).catch(err => {
+                    btn.innerHTML = originalHtml;
+                    alertCustom('Gagal menyinkronkan: ' + err);
+                });
+            }
+        }
+
+        function alertCustom(msg) {
+            alert(msg); // Custom replacement notice
+        }
+
+        // Tab Switching
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-navy', 'text-white', 'shadow-md', 'shadow-navy/20');
+                btn.classList.add('text-slate-600', 'hover:bg-slate-100');
+                if (btn.getAttribute('data-target') === tabId) {
+                    btn.classList.add('bg-navy', 'text-white', 'shadow-md', 'shadow-navy/20');
+                    btn.classList.remove('text-slate-600', 'hover:bg-slate-100');
+                }
+            });
+            renderAll();
+        }
+
+        function renderAll() {
+            renderCoaOptions();
+            renderCoaTable();
+            renderJurnalTable();
+            renderPettyCashTable();
+            renderBukuBesarOptions();
+            renderBukuBesar();
+            renderNeracaSaldo();
+            renderLabaRugi();
+            renderDashboard();
+            renderPengajuanDanaTable();
+            renderReimburseTable();
+            renderDivisiBudgetModule();
+        }
+
+        // Format Currency Helper
+        function formatIDR(num) {
+            return 'Rp ' + Number(num).toLocaleString('id-ID');
+        }
+
+        // --- DASHBOARD ---
+        function renderDashboard() {
+            let totalKas = 0;
+            let totalPendapatan = 0;
+            let totalPengeluaran = 0;
+
+            state.jurnal.forEach(j => {
+                if (j.code.startsWith('1-1') && j.debit > 0) totalKas += j.debit;
+                if (j.code.startsWith('1-1') && j.kredit > 0) totalKas -= j.kredit;
+                if (j.code.startsWith('4-')) totalPendapatan += j.kredit;
+                if (j.code.startsWith('5-')) totalPengeluaran += j.debit;
+            });
+
+            const labaBersih = totalPendapatan - totalPengeluaran;
+
+            document.getElementById('stat-total-kas').innerText = formatIDR(totalKas);
+            document.getElementById('stat-total-pendapatan').innerText = formatIDR(totalPendapatan);
+            document.getElementById('stat-total-pengeluaran').innerText = formatIDR(totalPengeluaran);
+            document.getElementById('stat-laba-bersih').innerText = formatIDR(labaBersih);
+
+            // Render Division Budget on Dashboard
+            const grid = document.getElementById('dash-div-budget-grid');
+            grid.innerHTML = '';
+            Object.keys(state.divisibudget).forEach(div => {
+                const b = state.divisibudget[div];
+                const sisa = b.total - b.used;
+                const pct = Math.round((b.used / (b.total || 1)) * 100);
+                grid.innerHTML += `
+                    <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl flex flex-col gap-2">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-slate-800 text-xs">${div}</span>
+                            <span class="text-[10px] bg-violet-100 text-violet-700 px-2 py-0.5 rounded font-medium">${pct}% Terpakai</span>
+                        </div>
+                        <div class="text-xs text-slate-500">Total: ${formatIDR(b.total)}</div>
+                        <div class="text-xs font-semibold text-slate-700">Sisa: ${formatIDR(sisa)}</div>
+                        <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden mt-1">
+                            <div class="bg-gradient-to-r from-violet-600 to-magenta h-full rounded-full" style="width: ${Math.min(pct, 100)}%"></div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // --- COA MANAGEMENT ---
+        function renderCoaOptions() {
+            const select = document.getElementById('j-account');
+            if (!select) return;
+            select.innerHTML = '';
+            state.coa.forEach(c => {
+                select.innerHTML += `<option value="${c.code}">${c.code} - ${c.name}</option>`;
+            });
+        }
+
+        function renderCoaTable() {
+            const tbody = document.getElementById('coa-tbody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            state.coa.forEach(c => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+                        <td class="p-3 font-semibold text-navy">${c.code}</td>
+                        <td class="p-3 font-medium text-slate-800">${c.name}</td>
+                        <td class="p-3"><span class="bg-slate-100 text-slate-700 px-2 py-1 rounded text-[10px] font-medium">${c.category}</span></td>
+                        <td class="p-3 text-center space-x-2">
+                            <button onclick="editCoa('${c.code}')" class="text-violet-600 hover:text-violet-800 font-medium"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="deleteCoa('${c.code}')" class="text-rose-600 hover:text-rose-800 font-medium"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function openCoaModal() {
+            document.getElementById('coa-modal-title').innerText = 'Tambah Akun COA';
+            document.getElementById('coa-old-code').value = '';
+            document.getElementById('coa-code').value = '';
+            document.getElementById('coa-name').value = '';
+            document.getElementById('coa-modal').classList.remove('hidden');
+        }
+
+        function closeCoaModal() {
+            document.getElementById('coa-modal').classList.add('hidden');
+        }
+
+        function saveCoa(e) {
+            e.preventDefault();
+            const oldCode = document.getElementById('coa-old-code').value;
+            const code = document.getElementById('coa-code').value;
+            const name = document.getElementById('coa-name').value;
+            const category = document.getElementById('coa-category').value;
+
+            if (oldCode) {
+                const idx = state.coa.findIndex(c => c.code === oldCode);
+                if (idx !== -1) {
+                    state.coa[idx] = { code, name, category };
+                }
+            } else {
+                if (state.coa.some(c => c.code === code)) {
+                    alertCustom('Kode akun sudah terdaftar!');
+                    return;
+                }
+                state.coa.push({ code, name, category });
+            }
+
+            saveStateToLocalStorage();
+            closeCoaModal();
+            renderAll();
+            syncDataToCloud();
+        }
+
+        function editCoa(code) {
+            const item = state.coa.find(c => c.code === code);
+            if (!item) return;
+            document.getElementById('coa-modal-title').innerText = 'Edit Akun COA';
+            document.getElementById('coa-old-code').value = item.code;
+            document.getElementById('coa-code').value = item.code;
+            document.getElementById('coa-name').value = item.name;
+            document.getElementById('coa-category').value = item.category;
+            document.getElementById('coa-modal').classList.remove('hidden');
+        }
+
+        function deleteCoa(code) {
+            if (confirm('Yakin ingin menghapus akun ini?')) {
+                state.coa = state.coa.filter(c => c.code !== code);
+                saveStateToLocalStorage();
+                renderAll();
+                syncDataToCloud();
+            }
+        }
+
+        // --- JURNAL UMUM ---
+        function addJurnal(e) {
+            e.preventDefault();
+            const date = document.getElementById('j-date').value;
+            const ref = document.getElementById('j-ref').value;
+            const desc = document.getElementById('j-desc').value;
+            const code = document.getElementById('j-account').value;
+            const position = document.getElementById('j-position').value;
+            const amount = parseFloat(document.getElementById('j-amount').value) || 0;
+
+            const coaObj = state.coa.find(c => c.code === code);
+            const name = coaObj ? coaObj.name : '';
+
+            let debit = position === 'Debit' ? amount : 0;
+            let kredit = position === 'Kredit' ? amount : 0;
+
+            state.jurnal.push({ date, ref, desc, code, name, debit, kredit });
+            saveStateToLocalStorage();
+            renderAll();
+            syncDataToCloud();
+
+            document.getElementById('j-desc').value = '';
+            document.getElementById('j-amount').value = '';
+        }
+
+        function renderJurnalTable() {
+            const tbody = document.getElementById('jurnal-tbody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            state.jurnal.forEach((j, idx) => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+                        <td class="p-3">${j.date}</td>
+                        <td class="p-3 font-semibold text-slate-700">${j.ref}</td>
+                        <td class="p-3">${j.desc}</td>
+                        <td class="p-3 font-mono text-navy">${j.code}</td>
+                        <td class="p-3 font-medium">${j.name}</td>
+                        <td class="p-3 text-right font-semibold text-emerald-600">${j.debit ? formatIDR(j.debit) : '-'}</td>
+                        <td class="p-3 text-right font-semibold text-rose-600">${j.kredit ? formatIDR(j.kredit) : '-'}</td>
+                        <td class="p-3 text-center">
+                            <button onclick="deleteJurnal(${idx})" class="text-rose-500 hover:text-rose-700"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function deleteJurnal(idx) {
+            state.jurnal.splice(idx, 1);
+            saveStateToLocalStorage();
+            renderAll();
+            syncDataToCloud();
+        }
+
+        function filterJurnal() {
+            const start = document.getElementById('jurnal-start').value;
+            const end = document.getElementById('jurnal-end').value;
+            if (!start || !end) return;
+
+            const tbody = document.getElementById('jurnal-tbody');
+            tbody.innerHTML = '';
+            const filtered = state.jurnal.filter(j => j.date >= start && j.date <= end);
+            filtered.forEach((j, idx) => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+                        <td class="p-3">${j.date}</td>
+                        <td class="p-3 font-semibold text-slate-700">${j.ref}</td>
+                        <td class="p-3">${j.desc}</td>
+                        <td class="p-3 font-mono text-navy">${j.code}</td>
+                        <td class="p-3 font-medium">${j.name}</td>
+                        <td class="p-3 text-right font-semibold text-emerald-600">${j.debit ? formatIDR(j.debit) : '-'}</td>
+                        <td class="p-3 text-right font-semibold text-rose-600">${j.kredit ? formatIDR(j.kredit) : '-'}</td>
+                        <td class="p-3 text-center">-</td>
+                    </tr>
+                `;
+            });
+        }
+
+        // --- PETTY CASH ---
+        function addPettyCash(e) {
+            e.preventDefault();
+            const date = document.getElementById('pc-date').value;
+            const branch = document.getElementById('pc-branch').value;
+            const type = document.getElementById('pc-type').value;
+            const desc = document.getElementById('pc-desc').value;
+            const amount = parseFloat(document.getElementById('pc-amount').value) || 0;
+
+            // Calculate last balance for this branch
+            let lastBalance = 0;
+            state.pettycash.filter(p => p.branch === branch).forEach(p => lastBalance = p.balance);
+
+            let newBalance = type === 'Top Up' ? lastBalance + amount : lastBalance - amount;
+
+            state.pettycash.push({ date, branch, type, desc, amount, balance: newBalance });
+            saveStateToLocalStorage();
+            renderAll();
+            syncDataToCloud();
+
+            document.getElementById('pc-desc').value = '';
+            document.getElementById('pc-amount').value = '';
+        }
+
+        function renderPettyCashTable() {
+            const tbody = document.getElementById('pettycash-tbody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            state.pettycash.forEach((p, idx) => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+                        <td class="p-3">${p.date}</td>
+                        <td class="p-3 font-semibold text-slate-700">${p.branch}</td>
+                        <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-medium ${p.type === 'Top Up' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}">${p.type}</span></td>
+                        <td class="p-3">${p.desc}</td>
+                        <td class="p-3 text-right font-semibold text-emerald-600">${p.type === 'Top Up' ? formatIDR(p.amount) : '-'}</td>
+                        <td class="p-3 text-right font-semibold text-rose-600">${p.type === 'Pengeluaran' ? formatIDR(p.amount) : '-'}</td>
+                        <td class="p-3 text-right font-bold text-slate-800">${formatIDR(p.balance)}</td>
+                        <td class="p-3 text-center">
+                            <button onclick="deletePettyCash(${idx})" class="text-rose-500 hover:text-rose-700"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function deletePettyCash(idx) {
+            state.pettycash.splice(idx, 1);
+            saveStateToLocalStorage();
+            renderAll();
+            syncDataToCloud();
+        }
+
+        function filterPettyCash() {
+            const start = document.getElementById('pc-start').value;
+            const end = document.getElementById('pc-end').value;
+            if (!start || !end) return;
+
+            const tbody = document.getElementById('pettycash-tbody');
+            tbody.innerHTML = '';
+            const filtered = state.pettycash.filter(p => p.date >= start && p.date <= end);
+            filtered.forEach(p => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+                        <td class="p-3">${p.date}</td>
+                        <td class="p-3 font-semibold text-slate-700">${p.branch}</td>
+                        <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-medium ${p.type === 'Top Up' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}">${p.type}</span></td>
+                        <td class="p-3">${p.desc}</td>
+                        <td class="p-3 text-right font-semibold text-emerald-600">${p.type === 'Top Up' ? formatIDR(p.amount) : '-'}</td>
+                        <td class="p-3 text-right font-semibold text-rose-600">${p.type === 'Pengeluaran' ? formatIDR(p.amount) : '-'}</td>
+                        <td class="p-3 text-right font-bold text-slate-800">${formatIDR(p.balance)}</td>
+                        <td class="p-3 text-center">-</td>
+                    </tr>
+                `;
+            });
+        }
+
+        // --- BUKU BESAR ---
+        function renderBukuBesarOptions() {
+            const select = document.getElementById('bb-account-filter');
+            if (!select) return;
+            const current = select.value;
+            select.innerHTML = '';
+            state.coa.forEach(c => {
+                select.innerHTML += `<option value="${c.code}">${c.code} - ${c.name}</option>`;
+            });
+            if (current) select.value = current;
+        }
+
+        function renderBukuBesar() {
+            const select = document.getElementById('bb-account-filter');
+            if (!select || !select.value) return;
+            const selectedCode = select.value;
+
+            const tbody = document.getElementById('bukubesar-tbody');
+            tbody.innerHTML = '';
+
+            const txs = state.jurnal.filter(j => j.code === selectedCode);
+            let runningBalance = 0;
+
+            txs.forEach(j => {
+                // Normal balance logic approximation
+                if (selectedCode.startsWith('1') || selectedCode.startsWith('5')) {
+                    runningBalance += (j.debit - j.kredit);
+                } else {
+                    runningBalance += (j.kredit - j.debit);
+                }
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+                        <td class="p-3">${j.date}</td>
+                        <td class="p-3 font-semibold text-slate-700">${j.ref}</td>
+                        <td class="p-3">${j.desc}</td>
+                        <td class="p-3 text-right font-semibold text-emerald-600">${j.debit ? formatIDR(j.debit) : '-'}</td>
+                        <td class="p-3 text-right font-semibold text-rose-600">${j.kredit ? formatIDR(j.kredit) : '-'}</td>
+                        <td class="p-3 text-right font-bold text-slate-800">${formatIDR(runningBalance)}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        // --- NERACA SALDO ---
+        function renderNeracaSaldo() {
+            const tbody = document.getElementById('neraca-tbody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            let totalDebit = 0;
+            let totalKredit = 0;
+
+            state.coa.forEach(c => {
+                let sumDebit = 0;
+                let sumKredit = 0;
+
+                state.jurnal.filter(j => j.code === c.code).forEach(j => {
+                    sumDebit += j.debit;
+                    sumKredit += j.kredit;
+                });
+
+                let netDebit = 0;
+                let netKredit = 0;
+
+                if (c.code.startsWith('1') || c.code.startsWith('5')) {
+                    let diff = sumDebit - sumKredit;
+                    if (diff >= 0) netDebit = diff; else netKredit = Math.abs(diff);
+                } else {
+                    let diff = sumKredit - sumDebit;
+                    if (diff >= 0) netKredit = diff; else netDebit = Math.abs(diff);
+                }
+
+                totalDebit += netDebit;
+                totalKredit += netKredit;
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+                        <td class="p-3 font-mono text-navy font-semibold">${c.code}</td>
+                        <td class="p-3 font-medium">${c.name}</td>
+                        <td class="p-3"><span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-[10px]">${c.category}</span></td>
+                        <td class="p-3 text-right font-semibold text-emerald-600">${netDebit ? formatIDR(netDebit) : '-'}</td>
+                        <td class="p-3 text-right font-semibold text-rose-600">${netKredit ? formatIDR(netKredit) : '-'}</td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('neraca-total-debit').innerText = formatIDR(totalDebit);
+            document.getElementById('neraca-total-kredit').innerText = formatIDR(totalKredit);
+        }
+
+        // --- LABA RUGI ---
+        function renderLabaRugi() {
+            const tbody = document.getElementById('labarugi-tbody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            let totalPendapatan = 0;
+            let totalBeban = 0;
+
+            tbody.innerHTML += `<tr class="bg-violet-50 font-bold text-violet-900"><td colspan="3" class="p-3">PENDAPATAN</td></tr>`;
+            state.coa.filter(c => c.category === 'Pendapatan').forEach(c => {
+                let sub = 0;
+                state.jurnal.filter(j => j.code === c.code).forEach(j => sub += (j.kredit - j.debit));
+                totalPendapatan += sub;
+                tbody.innerHTML += `
+                    <tr class="border-b border-slate-100">
+                        <td class="p-3 pl-6 font-mono">${c.code}</td>
+                        <td class="p-3">${c.name}</td>
+                        <td class="p-3 text-right font-semibold text-emerald-600">${formatIDR(sub)}</td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML += `<tr class="bg-slate-50 font-bold text-slate-800"><td colspan="2" class="p-3 text-right">Total Pendapatan:</td><td class="p-3 text-right font-bold text-emerald-600">${formatIDR(totalPendapatan)}</td></tr>`;
+
+            tbody.innerHTML += `<tr class="bg-rose-50 font-bold text-rose-900"><td colspan="3" class="p-3">BEBAN / BIAYA OPERASIONAL</td></tr>`;
+            state.coa.filter(c => c.category === 'Beban').forEach(c => {
+                let sub = 0;
+                state.jurnal.filter(j => j.code === c.code).forEach(j => sub += (j.debit - j.kredit));
+                totalBeban += sub;
+                tbody.innerHTML += `
+                    <tr class="border-b border-slate-100">
+                        <td class="p-3 pl-6 font-mono">${c.code}</td>
+                        <td class="p-3">${c.name}</td>
+                        <td class="p-3 text-right font-semibold text-rose-600">${formatIDR(sub)}</td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML += `<tr class="bg-slate-50 font-bold text-slate-800"><td colspan="2" class="p-3 text-right">Total Beban:</td><td class="p-3 text-right font-bold text-rose-600">${formatIDR(totalBeban)}</td></tr>`;
+
+            const labaBersih = totalPendapatan - totalBeban;
+            tbody.innerHTML += `
+                <tr class="bg-gradient-to-r from-navy to-violet-800 text-white font-bold text-sm">
+                    <td colspan="2" class="p-4 text-right">LABA BERSIH (NET PROFIT):</td>
+                    <td class="p-4 text-right">${formatIDR(labaBersih)}</td>
+                </tr>
+            `;
+        }
+
+        // --- PENGAJUAN DANA & REIMBURSE & BUDGET DIVISI ---
+        function submitPengajuanDana(e) {
+            e.preventDefault();
+            const nama = document.getElementById('fd-nama').value;
+            const divisi = document.getElementById('fd-divisi').value;
+            const jumlah = parseFloat(document.getElementById('fd-jumlah').value) || 0;
+            const keterangan = document.getElementById('fd-keterangan').value;
+            const fileInput = document.getElementById('fd-file');
+            const fileName = fileInput.files.length > 0 ? fileInput.files[0].name : 'Lampiran.pdf';
+            const date = new Date().toISOString().split('T')[0];
+
+            // Deduct from division budget used
+            if (state.divisibudget[divisi]) {
+                state.divisibudget[divisi].used += jumlah;
+                state.divisibudget[divisi].history.push({ date, ket: `Pengajuan Dana: ${keterangan}`, topup: 0 });
+            }
+
+            state.pengajuandana.push({ date, nama, divisi, jumlah, keterangan, file: fileName, status: 'Disetujui' });
+            saveStateToLocalStorage();
+            renderAll();
+            syncDataToCloud();
+
+            e.target.reset();
+            alertCustom('Pengajuan dana berhasil dikirim dan otomatis tercatat pada anggaran divisi!');
+        }
+
+        function renderPengajuanDanaTable() {
+            const tbody = document.getElementById('dana-tbody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            state.pengajuandana.forEach(d => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+                        <td class="p-3">${d.date}</td>
+                        <td class="p-3 font-semibold text-slate-800">${d.nama}</td>
+                        <td class="p-3"><span class="bg-violet-100 text-violet-700 px-2 py-0.5 rounded text-[10px] font-medium">${d.divisi}</span></td>
+                        <td class="p-3 text-right font-bold text-navy">${formatIDR(d.jumlah)}</td>
+                        <td class="p-3">${d.keterangan}</td>
+                        <td class="p-3"><a href="#" class="text-violet-600 underline text-xs"><i class="fa-solid fa-paperclip mr-1"></i>${d.file}</a></td>
+                        <td class="p-3 text-center"><span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-semibold">${d.status}</span></td>
+                    </tr>
+                `;
+            });
+        }
+
+        function submitReimburse(e) {
+            e.preventDefault();
+            const nama = document.getElementById('rb-nama').value;
+            const divisi = document.getElementById('rb-divisi').value;
+            const jumlah = parseFloat(document.getElementById('rb-jumlah').value) || 0;
+            const keterangan = document.getElementById('rb-keterangan').value;
+            const fileInput = document.getElementById('rb-file');
+            const fileName = fileInput.files.length > 0 ? fileInput.files[0].name : 'Nota.jpg';
+            const date = new Date().toISOString().split('T')[0];
+
+            if (state.divisibudget[divisi]) {
+                state.divisibudget[divisi].used += jumlah;
+                state.divisibudget[divisi].history.push({ date, ket: `Reimburse: ${keterangan}`, topup: 0 });
+            }
+
+            state.reimburse.push({ date, nama, divisi, jumlah, keterangan, file: fileName, status: 'Diproses' });
+            saveStateToLocalStorage();
+            renderAll();
+            syncDataToCloud();
+
+            e.target.reset();
+            alertCustom('Pengajuan reimburse berhasil dikirim!');
+        }
+
+        function renderReimburseTable() {
+            const tbody = document.getElementById('reimburse-tbody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            state.reimburse.forEach(r => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+                        <td class="p-3">${r.date}</td>
+                        <td class="p-3 font-semibold text-slate-800">${r.nama}</td>
+                        <td class="p-3"><span class="bg-magenta/10 text-magenta px-2 py-0.5 rounded text-[10px] font-medium">${r.divisi}</span></td>
+                        <td class="p-3 text-right font-bold text-magenta">${formatIDR(r.jumlah)}</td>
+                        <td class="p-3">${r.keterangan}</td>
+                        <td class="p-3"><a href="#" class="text-violet-600 underline text-xs"><i class="fa-solid fa-paperclip mr-1"></i>${r.file}</a></td>
+                        <td class="p-3 text-center"><span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded text-[10px] font-semibold">${r.status}</span></td>
+                    </tr>
+                `;
+            });
+        }
+
+        function renderDivisiBudgetModule() {
+            const container = document.getElementById('divbudget-cards-container');
+            if (container) {
+                container.innerHTML = '';
+                Object.keys(state.divisibudget).forEach(div => {
+                    const b = state.divisibudget[div];
+                    const sisa = b.total - b.used;
+                    container.innerHTML += `
+                        <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-sm flex flex-col gap-3">
+                            <div class="flex justify-between items-center">
+                                <h4 class="font-bold text-slate-800 text-sm">${div}</h4>
+                                <span class="text-[10px] bg-navy/10 text-navy px-2.5 py-1 rounded-full font-bold">Active</span>
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <div class="text-xs text-slate-400">Total Anggaran</div>
+                                <div class="text-lg font-bold text-navy">${formatIDR(b.total)}</div>
+                            </div>
+                            <div class="flex justify-between text-xs text-slate-500 pt-2 border-t border-slate-100">
+                                <span>Terpakai: <strong class="text-rose-600">${formatIDR(b.used)}</strong></span>
+                                <span>Sisa: <strong class="text-emerald-600">${formatIDR(sisa)}</strong></span>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            const tbody = document.getElementById('divbudget-tbody');
+            if (tbody) {
+                tbody.innerHTML = '';
+                Object.keys(state.divisibudget).forEach(div => {
+                    const b = state.divisibudget[div];
+                    b.history.forEach(h => {
+                        tbody.innerHTML += `
+                            <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+                                <td class="p-3">${h.date}</td>
+                                <td class="p-3 font-bold text-slate-800">${div}</td>
+                                <td class="p-3">${h.ket}</td>
+                                <td class="p-3 text-right font-semibold text-emerald-600">${h.topup ? formatIDR(h.topup) : '-'}</td>
+                                <td class="p-3 text-right font-semibold text-rose-600">${!h.topup ? formatIDR(b.used) : '-'}</td>
+                                <td class="p-3 text-right font-bold text-slate-800">${formatIDR(b.total - b.used)}</td>
+                            </tr>
+                        `;
+                    });
+                });
+            }
+        }
+
+        function openTopupBudgetModal() {
+            document.getElementById('budget-modal').classList.remove('hidden');
+        }
+
+        function closeTopupBudgetModal() {
+            document.getElementById('budget-modal').classList.add('hidden');
+        }
+
+        function submitTopupBudget(e) {
+            e.preventDefault();
+            const divisi = document.getElementById('tb-divisi').value;
+            const jumlah = parseFloat(document.getElementById('tb-jumlah').value) || 0;
+            const keterangan = document.getElementById('tb-keterangan').value;
+            const date = new Date().toISOString().split('T')[0];
+
+            if (state.divisibudget[divisi]) {
+                state.divisibudget[divisi].total += jumlah;
+                state.divisibudget[divisi].history.push({ date, ket: `Top-up: ${keterangan}`, topup: jumlah });
+            }
+
+            saveStateToLocalStorage();
+            closeTopupBudgetModal();
+            renderAll();
+            syncDataToCloud();
+            alertCustom('Top-up budget divisi berhasil disimpan!');
+        }
+
+        // --- EXPORT TOOLS (EXCEL & PDF) ---
+        function exportTableToExcel(tableId, filename) {
+            const table = document.getElementById(tableId);
+            if (!table) return;
+            const wb = XLSX.utils.table_to_book(table, { sheet: "Laporan SIA" });
+            XLSX.writeFile(wb, filename);
+        }
+
+        function exportTableToPDF(tableId, titleText, filename) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            doc.setFontSize(16);
+            doc.setTextColor(10, 30, 133);
+            doc.text("SIA ENTERPRISE REPORT", 14, 20);
+
+            doc.setFontSize(12);
+            doc.setTextColor(92, 18, 148);
+            doc.text(titleText, 14, 28);
+
+            doc.setFontSize(9);
+            doc.setTextColor(100);
+            doc.text("Tanggal Cetak: " + new Date().toLocaleDateString('id-ID'), 14, 35);
+
+            doc.autoTable({
+                html: '#' + tableId,
+                startY: 40,
+                theme: 'grid',
+                headStyles: { fillColor: [10, 30, 133] },
+                styles: { fontSize: 8 }
+            });
+
+            doc.save(filename);
+        }
+    </script>
+</body>
+</html>
